@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DBS on Steroids
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  Putting the editor of the TU Vienna databases website on steroids
 // @author       Stefnotch
 // @match        https://gordon.dbai.tuwien.ac.at/*
@@ -10,7 +10,7 @@
 // @grant GM_addStyle
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     GM_addStyle(`
@@ -130,6 +130,8 @@
                     onSubmit();
                 });
 
+                makeSqlCompletions(editor);
+
                 makeResizeable(editor, container);
 
                 toggleEditorDisplay = () => {
@@ -176,11 +178,11 @@
             method: 'post',
             body: data,
         }).then(response => response.text())
-        .then(text => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(text, "text/html");
-            return doc;
-        });
+            .then(text => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, "text/html");
+                return doc;
+            });
         if (!responseDocument) {
             console.error("Failed to load response document");
             return null;
@@ -195,10 +197,10 @@
     }
 
     function getContainerTr(formElement) {
-      const inputElement = formElement.querySelector("#queryInput");
-      const tr = topmostParentWithTagName(inputElement, "tr", formElement);
-      assert(tr, "Missing table row");
-      return tr;
+        const inputElement = formElement.querySelector("#queryInput");
+        const tr = topmostParentWithTagName(inputElement, "tr", formElement);
+        assert(tr, "Missing table row");
+        return tr;
     }
 
     function getOutputs(formElement) {
@@ -206,23 +208,41 @@
 
         const elements = [];
         let current = tr.nextElementSibling;
-        while(current) {
-          elements.push(current);
-          current = current.nextElementSibling;
+        while (current) {
+            elements.push(current);
+            current = current.nextElementSibling;
         }
         return elements;
     }
 
+    function makeSqlCompletions(editor) {
+        monaco.languages.registerCompletionItemProvider('sql', {
+            provideCompletionItems: () => {
+                const sqlKeywords = ["select", "from", "where", "group by", "order by", "distinct", "having", "inner join", "outer join", "left join", "right join", "count", "and", "on", "not", "sum", "avg", "max", "min", "coalesce", "like", "desc", "asc"];
+                const suggestions = [];
+                sqlKeywords.forEach(v => {
+                    suggestions.push({
+                        label: v,
+                        kind: monaco.languages.CompletionItemKind.Keyword,
+                        insertText: v
+                    });
+                });
+
+                return { suggestions: suggestions };
+            }
+        });
+    }
+
     function topmostParentWithTagName(element, tagName, container) {
-      tagName = tagName.toLowerCase();
-	  const parents = [];
-      while(element != null && element != container) {
-        if(element.tagName.toLowerCase() == tagName) {
-          parents.push(element);
+        tagName = tagName.toLowerCase();
+        const parents = [];
+        while (element != null && element != container) {
+            if (element.tagName.toLowerCase() == tagName) {
+                parents.push(element);
+            }
+            element = element.parentElement;
         }
-        element = element.parentElement;
-      }
-      return parents[parents.length - 1];
+        return parents[parents.length - 1];
     }
 
     function assert(condition, msg) {
@@ -231,12 +251,12 @@
         }
     }
 
-  function loadScript(url, callback) {
-  const script = document.createElement("script");
-  script.onload = () => callback();
-  script.src = url;
-  document.head.appendChild(script);
-}
+    function loadScript(url, callback) {
+        const script = document.createElement("script");
+        script.onload = () => callback();
+        script.src = url;
+        document.head.appendChild(script);
+    }
 
     initEditor();
 })();
