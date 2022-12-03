@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DBS on Steroids
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Putting the editor of the TU Vienna databases website on steroids
 // @author       Stefnotch
 // @match        https://gordon.dbai.tuwien.ac.at/*
