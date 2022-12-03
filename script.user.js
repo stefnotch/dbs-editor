@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DBS on Steroids
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      0.8
 // @description  Putting the editor of the TU Vienna databases website on steroids
 // @author       Stefnotch
 // @match        https://gordon.dbai.tuwien.ac.at/*
@@ -105,11 +105,11 @@
         };
 
         window.addEventListener('beforeunload', (event) => {
-          const hasChanged = inputElement.value != getUserInput();
-          if(hasChanged) {
-            event.preventDefault();
-            return event.returnValue = "Are you sure you want to exit?";
-          }
+            const hasChanged = inputElement.value != getUserInput();
+            if (hasChanged) {
+                event.preventDefault();
+                return event.returnValue = "Are you sure you want to exit?";
+            }
         });
 
         // Load Monaco. We are using a CDN.
@@ -261,7 +261,9 @@
 
     function loadScript(url, callback) {
         const script = document.createElement("script");
-        script.onload = () => callback();
+        script.onload = () => {
+          callback();
+        };
         script.src = url;
         document.head.appendChild(script);
     }
