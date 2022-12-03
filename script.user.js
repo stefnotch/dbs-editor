@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DBS on Steroids
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  Putting the editor of the TU Vienna databases website on steroids
 // @author       Stefnotch
 // @match        https://gordon.dbai.tuwien.ac.at/*
@@ -72,16 +72,17 @@
         if (!formElement) return;
 
         // On form submit do not reload the page and instead load the result table
-        const replaceResultTable = (newResultTable) => {
-            const existingTable = getTable(formElement);
-            assert(existingTable, "Missing table");
-            existingTable.replaceWith(newResultTable);
+        const replaceResultTable = (newResults) => {
+            const existingOutputs = getOutputs(formElement);
+            existingOutputs.forEach(v => v.remove());
+            const tr = getContainerTr(formElement);
+            tr.after(...newResults);
         };
         const url = formElement.action;
         assert(url, "Invalid form element");
         let loadUserInput = () => { };
         const onSubmit = async () => {
-            getTable(formElement).style.opacity = "0.5"; // Loading
+            getOutputs(formElement).forEach(v => v.style.opacity = "0.5"); // Loading
             loadUserInput();
             const newResultTable = await fetchResultTable(url, formElement);
             replaceResultTable(newResultTable);
@@ -89,7 +90,7 @@
 
         // Load Monaco. We are using a CDN.
         const scriptDirectory = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/';
-      
+
         loadScript(scriptDirectory + "min/vs/loader.js", () => {
             require.config({ paths: { vs: scriptDirectory + 'min/vs' } });
             require(['vs/editor/editor.main'], function () {
@@ -176,14 +177,37 @@
             return null;
         }
 
-        const resultTable = getTable(resultForm);
-        return resultTable;
+        return getOutputs(resultForm);
     }
 
-    function getTable(formElement) {
-        const table = formElement.querySelector("#messageBox") || formElement.querySelector(".resultTable");
-        assert(table, "Missing table");
-        return table;
+    function getContainerTr(formElement) {
+      const inputElement = formElement.querySelector("#queryInput");
+      const tr = parentWithTagName(inputElement, "tr");
+      assert(tr, "Missing table row");
+      return tr;
+    }
+
+    function getOutputs(formElement) {
+        const tr = getContainerTr(formElement);
+
+        const elements = [];
+        let current = tr.nextElementSibling;
+        while(current) {
+          elements.push(current);
+          current = current.nextElementSibling;
+        }
+        return elements;
+    }
+
+    function parentWithTagName(element, tagName) {
+      tagName = tagName.toLowerCase();
+      while(element != null) {
+        if(element.tagName.toLowerCase() == tagName) {
+          return element;
+        }
+        element = element.parentElement;
+      }
+      return null;
     }
 
     function assert(condition, msg) {
