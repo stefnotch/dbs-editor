@@ -1,13 +1,12 @@
 // ==UserScript==
 // @name         DBS on Steroids
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  Putting the editor of the TU Vienna databases website on steroids
 // @author       Stefnotch
 // @match        https://gordon.dbai.tuwien.ac.at/*
 // @updateURL    https://github.com/stefnotch/dbs-editor/script.js
 // @downloadURL  https://github.com/stefnotch/dbs-editor/script.js
-// @require https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.js
 // @grant GM_addStyle
 // ==/UserScript==
 
@@ -89,8 +88,9 @@
         };
 
         // Load Monaco. We are using a CDN.
-        const scriptDirectory = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/'
-        (() => {
+        const scriptDirectory = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/';
+      
+        loadScript(scriptDirectory + "min/vs/loader.js", () => {
             require.config({ paths: { vs: scriptDirectory + 'min/vs' } });
             require(['vs/editor/editor.main'], function () {
                 const inputElement = formElement.querySelector("#queryInput");
@@ -122,7 +122,7 @@
                     inputElement.style.display = isEditorEnabled() ? "none" : "block";
                 }
             });
-        })();
+        });
 
         // Replace form submit
         formElement.addEventListener("submit", async (event) => {
@@ -191,6 +191,13 @@
             throw new Error(msg);
         }
     }
+
+  function loadScript(url, callback) {
+  const script = document.createElement("script");
+  script.onload = () => callback();
+  script.src = url;
+  document.head.appendChild(script);
+}
 
     initEditor();
 })();
