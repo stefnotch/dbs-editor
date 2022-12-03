@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DBS on Steroids
 // @namespace    http://tampermonkey.net/
-// @version      0.6
+// @version      0.7
 // @description  Putting the editor of the TU Vienna databases website on steroids
 // @author       Stefnotch
 // @match        https://gordon.dbai.tuwien.ac.at/*
@@ -84,6 +84,8 @@
 
         const formElement = document.querySelector("#queryForm");
         if (!formElement) return;
+        const inputElement = formElement.querySelector("#queryInput");
+        assert(inputElement, "Missing input element");
 
         // On form submit do not reload the page and instead load the result table
         const replaceResultTable = (newResults) => {
@@ -94,13 +96,21 @@
         };
         const url = formElement.action;
         assert(url, "Invalid form element");
-        let loadUserInput = () => { };
+        let getUserInput = () => { return inputElement.value; };
         const onSubmit = async () => {
             getOutputs(formElement).forEach(v => v.style.opacity = "0.5"); // Loading
-            loadUserInput();
+            inputElement.value = getUserInput();
             const newResultTable = await fetchResultTable(url, formElement);
             replaceResultTable(newResultTable);
         };
+
+        window.addEventListener('beforeunload', (event) => {
+          const hasChanged = inputElement.value != getUserInput();
+          if(hasChanged) {
+            event.preventDefault();
+            return event.returnValue = "Are you sure you want to exit?";
+          }
+        });
 
         // Load Monaco. We are using a CDN.
         const scriptDirectory = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/';
@@ -108,8 +118,6 @@
         loadScript(scriptDirectory + "min/vs/loader.js", () => {
             require.config({ paths: { vs: scriptDirectory + 'min/vs' } });
             require(['vs/editor/editor.main'], function () {
-                const inputElement = formElement.querySelector("#queryInput");
-                assert(inputElement, "Missing input element");
                 inputElement.style.display = "none";
                 const container = document.createElement("div");
                 container.classList.add("editor-container");
@@ -123,8 +131,8 @@
                         enabled: false
                     }
                 });
-                loadUserInput = () => {
-                    inputElement.value = editor.getValue() ?? "";
+                getUserInput = () => {
+                    return editor.getValue() ?? "";
                 }
                 editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
                     onSubmit();
