@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DBS on Steroids
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  Putting the editor of the TU Vienna databases website on steroids
 // @author       Stefnotch
 // @match        https://gordon.dbai.tuwien.ac.at/*
@@ -28,6 +28,8 @@
 .editor-container {
     position: relative;
     margin-bottom: 8px;
+    border-left: 1px solid #aaa;
+    border-right: 1px solid #aaa;
 }
 
 .editor-container::after  {
@@ -40,6 +42,18 @@
     width: 100%;
     cursor: ns-resize;
 }
+
+/* Make horizontal scrollbar, decorations overview ruler and vertical scrollbar arrows opaque */
+.monaco-editor .monaco-scrollable-element .scrollbar.horizontal,
+.monaco-editor .decorationsOverviewRuler,
+.monaco-editor .monaco-scrollable-element .scrollbar.vertical .arrow-background {
+	background: rgba(230, 230, 230, 255);
+}
+/* Make vertical scrollbar transparent to allow decorations overview ruler to be visible */
+.monaco-editor .monaco-scrollable-element .scrollbar.vertical {
+	background: rgba(0, 0, 0, 0);
+}
+
 `);
 
     const LocalStorageKey = "advanced-editor";
@@ -182,7 +196,7 @@
 
     function getContainerTr(formElement) {
       const inputElement = formElement.querySelector("#queryInput");
-      const tr = parentWithTagName(inputElement, "tr");
+      const tr = topmostParentWithTagName(inputElement, "tr", formElement);
       assert(tr, "Missing table row");
       return tr;
     }
@@ -199,15 +213,16 @@
         return elements;
     }
 
-    function parentWithTagName(element, tagName) {
+    function topmostParentWithTagName(element, tagName, container) {
       tagName = tagName.toLowerCase();
-      while(element != null) {
+	  const parents = [];
+      while(element != null && element != container) {
         if(element.tagName.toLowerCase() == tagName) {
-          return element;
+          parents.push(element);
         }
         element = element.parentElement;
       }
-      return null;
+      return parents[parents.length - 1];
     }
 
     function assert(condition, msg) {
