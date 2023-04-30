@@ -1,5 +1,5 @@
 # dbs-editor
-Putting the editor of the TU Vienna databases website on steroids.
+Putting the editor of the TU Vienna databases website on steroids. This has been integrated into the official DBS course website, yay.
 
 **Install it**
 1. Firefox: [Violentmonkey](https://addons.mozilla.org/en-US/firefox/addon/violentmonkey/)  
